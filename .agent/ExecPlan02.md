@@ -16,11 +16,15 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 - [x] (2026-01-14 12:06Z) アイコン列を 3 時間刻みに整え、降水確率テキストを併記するデザインへ刷新した。
 - [x] (2026-01-14 12:08Z) 画面全体のレイアウトとテストを更新し、`npm run lint`, `npm run test`, `npm run build` が通ることを検証した。
 - [x] (2026-01-14 12:45Z) 現在時刻をチャート左端にするトグルを追加し、ローテーションロジックとテスト/ビルドを再確認した。
+- [x] (2026-01-14 12:59Z) 翌日分の予報を取得して 24 時間ウィンドウを形成し、start-from-now 時に日跨ぎでも線が途切れないようにした。
+- [x] (2026-01-14 13:13Z) start-from-now 時は翌日分を含む並び替えに切り替え、ビルド/テストを再確認した。
 
 ## Surprises & Discoveries
 
 - Observation: Vitest(jsdom) 上で Recharts を描画すると、コンテナ寸法が 0 と判定される警告がテスト出力に残るが、UI 表示やテスト結果に影響はなかった。
   Evidence: `npm run test` 実行時に「The width(-1) and height(-1) of chart should be greater than 0」が標準エラーに出力されるが、全テストはパスする。
+- Observation: テスト用モックの `isoTime` 日付が実行日のベース日付と異なる場合、チャートが空になるため、日付一致がなくてもシーケンス全体からウィンドウを組むフォールバックを入れた。
+  Evidence: `app/__tests__/page.test.tsx` 実行時に `isoTime` が 2024-01-10 だがベース日は現在日付となり、フォールバック追加でアイコン/チャートが表示されるようになった。
 
 ## Decision Log
 
@@ -102,3 +106,5 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 Revision Note (2026-01-14 11:53Z, Codex): 新規作成。`sketch02.jpg` に沿った UI 改修の目的・方針・マイルストンを記述し、初回の進捗を記録した。
 Revision Note (2026-01-14 12:08Z, Codex): テーマ/チャート/アイコンのスタイルを `sketch02` 風に実装し、lint/test/build 成功を反映。Surprises に jsdom + Recharts の寸法警告を追記。
 Revision Note (2026-01-14 12:45Z, Codex): 現在時刻からチャートを開始するオプションを追加し、データ回転と表示ラベルを調整。lint/test/build を再実行。
+Revision Note (2026-01-14 12:59Z, Codex): 翌日分予報を API で取得し 24 時間ウィンドウを構成、日跨ぎでも線が継続するよう更新。テスト用日付不一致に備えたフォールバックを追加。
+Revision Note (2026-01-14 13:13Z, Codex): start-from-now 時のウィンドウ形成を翌日分を含む全配列基準に変更し、lint/test/build を再実行。

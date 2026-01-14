@@ -134,7 +134,7 @@ const fetchForecastForDate = async (args: {
     longitude: args.longitude,
     timezone: args.timezone,
     start_date: args.date,
-    end_date: args.date
+    end_date: shiftDate(args.date, 1)
   });
 };
 

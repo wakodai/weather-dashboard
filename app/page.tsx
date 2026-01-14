@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { TemperatureChart } from "@/components/TemperatureChart";
-import { formatDateInTimezone } from "@/lib/weather/dateUtils";
+import { formatDateInTimezone, shiftDate } from "@/lib/weather/dateUtils";
 import { PRESET_LOCATIONS } from "@/lib/weather/presets";
 import { describeWeatherCode } from "@/lib/weather/weatherCode";
 import { DashboardResponse, HourlyPoint, Location } from "@/lib/weather/types";
@@ -19,19 +19,43 @@ type ChartDatum = {
 
 const formatHourLabel = (hour: number) => hour.toString().padStart(2, "0");
 
-const mergeSeries = (
-  forecast: HourlyPoint[],
-  actual: HourlyPoint[]
-): Omit<ChartDatum, "order" | "label">[] => {
-  const byHour = new Map<number, Omit<ChartDatum, "order" | "label">>();
-  forecast.forEach((p) => {
-    byHour.set(p.hour, { hour: p.hour, forecast: p.temperatureC, actual: null });
-  });
-  actual.forEach((p) => {
-    const existing = byHour.get(p.hour) ?? { hour: p.hour };
-    byHour.set(p.hour, { ...existing, actual: p.temperatureC });
-  });
-  return Array.from(byHour.values()).sort((a, b) => a.hour - b.hour);
+const sortByIsoTime = (points: HourlyPoint[]) =>
+  [...points].sort((a, b) => (a.isoTime > b.isoTime ? 1 : -1));
+
+const sliceForecastWindow = ({
+  forecast,
+  baseDate,
+  startHour,
+  startFromNow
+}: {
+  forecast: HourlyPoint[];
+  baseDate: string;
+  startHour: number;
+  startFromNow: boolean;
+}): HourlyPoint[] => {
+  const sorted = sortByIsoTime(forecast);
+  const baseDayPoints = sorted.filter((p) => p.isoTime.startsWith(baseDate));
+  const baseWindow = baseDayPoints.length > 0 ? baseDayPoints : sorted;
+
+  if (!startFromNow) {
+    return baseWindow.slice(0, 24);
+  }
+
+  // start-from-now は翌日分も含んだ全体順序（sorted）で 24h ウィンドウを形成する
+  const startIdx = sorted.findIndex(
+    (p) => p.isoTime.startsWith(baseDate) && p.hour >= startHour
+  );
+  const pivot =
+    startIdx >= 0
+      ? startIdx
+      : sorted.findIndex((p) => p.isoTime.startsWith(baseDate));
+  const safePivot = pivot >= 0 ? pivot : 0;
+  const window: HourlyPoint[] = [];
+  for (let i = 0; i < 24 && i < sorted.length; i += 1) {
+    const idx = (safePivot + i) % sorted.length;
+    window.push(sorted[idx]);
+  }
+  return window;
 };
 
 const currentHourInTimezone = (timezone: string): number => {
@@ -145,32 +169,49 @@ export default function HomePage() {
 
   const chartData = useMemo(() => {
     if (!dashboard) return [];
-    const merged = mergeSeries(dashboard.todayForecast, dashboard.yesterdayActual).map(
-      (item, idx) => ({
-        ...item,
-        order: idx,
-        label: `${formatHourLabel(item.hour)}時`
-      })
-    );
-
-    if (!startFromNow) return merged;
-
+    const baseDate = dashboard.date;
     const startHour = currentHourInTimezone(selectedLocation.timezone);
-    const startIndex = merged.findIndex((d) => d.hour >= startHour);
-    const pivot = startIndex === -1 ? 0 : startIndex;
-    const rotated = merged.slice(pivot).concat(merged.slice(0, pivot));
-    return rotated.map((item, idx) => ({ ...item, order: idx }));
+    const forecastWindow = sliceForecastWindow({
+      forecast: dashboard.todayForecast,
+      baseDate,
+      startHour,
+      startFromNow
+    });
+    const actualWindow = dashboard.yesterdayActual;
+    const actualByHour = new Map<number, number>();
+    actualWindow.forEach((p) => actualByHour.set(p.hour, p.temperatureC));
+    const nextDate = shiftDate(baseDate, 1);
+
+    return forecastWindow.map((point, idx) => {
+      const isNextDay = point?.isoTime.startsWith(nextDate);
+      const suffix = isNextDay ? " (+1)" : "";
+      return {
+        order: idx,
+        hour: point.hour,
+        forecast: point.temperatureC,
+        actual: actualByHour.get(point.hour) ?? null,
+        label: `${formatHourLabel(point.hour)}時${suffix}`
+      };
+    });
   }, [dashboard, startFromNow, selectedLocation.timezone]);
 
   const timelineIcons = useMemo(() => {
     if (!dashboard) return [];
-    return dashboard.todayForecast
+    const baseDate = dashboard.date;
+    const startHour = currentHourInTimezone(selectedLocation.timezone);
+    const windowed = sliceForecastWindow({
+      forecast: dashboard.todayForecast,
+      baseDate,
+      startHour,
+      startFromNow
+    });
+    return windowed
       .filter((_, idx) => idx % 3 === 0)
       .map((point) => ({
         point,
         descriptor: describeWeatherCode(point.weatherCode)
       }));
-  }, [dashboard]);
+  }, [dashboard, selectedLocation.timezone, startFromNow]);
 
   const handlePresetChange = (id: string) => {
     const preset = PRESET_LOCATIONS.find((p) => p.id === id);
