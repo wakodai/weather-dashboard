@@ -4,13 +4,17 @@ import { PRESET_LOCATIONS } from "@/lib/weather/presets";
 import { DashboardResponse } from "@/lib/weather/types";
 
 const sampleForecast = [
-  { isoTime: "2024-01-10T00:00", hour: 0, temperatureC: 10, weatherCode: 0 },
-  { isoTime: "2024-01-10T01:00", hour: 1, temperatureC: 11, weatherCode: 1 }
+  { isoTime: "2024-01-10T00:00", hour: 0, temperatureC: 3, weatherCode: 2 },
+  { isoTime: "2024-01-10T03:00", hour: 3, temperatureC: 2, weatherCode: 3 },
+  { isoTime: "2024-01-10T06:00", hour: 6, temperatureC: 0, weatherCode: 2 },
+  { isoTime: "2024-01-10T09:00", hour: 9, temperatureC: 6, weatherCode: 1 },
+  { isoTime: "2024-01-10T12:00", hour: 12, temperatureC: 10, weatherCode: 0 }
 ];
 
 const sampleActual = [
-  { isoTime: "2024-01-09T00:00", hour: 0, temperatureC: 7, weatherCode: 61 },
-  { isoTime: "2024-01-09T01:00", hour: 1, temperatureC: 6, weatherCode: 63 }
+  { isoTime: "2024-01-09T00:00", hour: 0, temperatureC: 1, weatherCode: 61 },
+  { isoTime: "2024-01-09T03:00", hour: 3, temperatureC: 0, weatherCode: 63 },
+  { isoTime: "2024-01-09T06:00", hour: 6, temperatureC: -1, weatherCode: 63 }
 ];
 
 const baseDashboard: DashboardResponse = {
@@ -83,10 +87,12 @@ describe("HomePage", () => {
   test("renders default location and weather icons from API response", async () => {
     render(<HomePage />);
 
-    const locationLabels = await screen.findAllByText(/東京, 日本/);
-    expect(locationLabels.length).toBeGreaterThan(0);
-    expect(await screen.findByText(/10\.0℃/)).toBeInTheDocument();
-    expect(screen.getAllByText("SUN").length).toBeGreaterThan(0);
+    const locations = await screen.findAllByText(/東京, 日本/);
+    expect(locations.length).toBeGreaterThan(0);
+    expect(await screen.findByText("Timeline")).toBeInTheDocument();
+    expect(await screen.findByText("☀️")).toBeInTheDocument();
+    const rainChances = await screen.findAllByText(/0%/);
+    expect(rainChances.length).toBeGreaterThan(0);
   });
 
   test("changing preset triggers fetch and updates location text", async () => {
