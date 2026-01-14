@@ -11,7 +11,9 @@ import {
 } from "recharts";
 
 type ChartDatum = {
+  order: number;
   hour: number;
+  label?: string;
   forecast?: number | null;
   actual?: number | null;
 };
@@ -28,16 +30,20 @@ const formatValue = (value?: number | string) =>
 const CustomTooltip = ({
   active,
   payload,
-  label
+  label,
+  labelMap
 }: {
   active?: boolean;
-  payload?: { name?: string; value?: number; color?: string }[];
+  payload?: ReadonlyArray<{ name?: string; value?: number; color?: string }>;
   label?: number | string;
+  labelMap?: Map<number, string>;
 }) => {
   if (!active || !payload || payload.length === 0) return null;
+  const displayLabel =
+    labelMap?.get(Number(label)) ?? (label !== undefined ? formatHour(Number(label)) : "");
   return (
     <div className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 shadow-xl shadow-black/40 backdrop-blur">
-      <div className="font-semibold text-white">{formatHour(Number(label))}</div>
+      <div className="font-semibold text-white">{displayLabel}</div>
       <ul className="mt-1 space-y-1">
         {payload.map((item) => (
           <li key={item.name} className="flex items-center gap-2">
@@ -168,6 +174,8 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
 
   const highlights = calculateHighlights(data);
   const highlightDot = renderHighlightDot(highlights);
+  const labelMap = new Map<number, string>();
+  data.forEach((d) => labelMap.set(d.order, d.label ?? formatHour(d.hour)));
 
   return (
     <div className="h-72 w-full">
@@ -175,8 +183,8 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
         <LineChart data={data} margin={{ top: 24, right: 16, left: 0, bottom: 12 }}>
           <CartesianGrid strokeDasharray="2 8" stroke="#1f2937" vertical={false} />
           <XAxis
-            dataKey="hour"
-            tickFormatter={formatHour}
+            dataKey="order"
+            tickFormatter={(value) => labelMap.get(Number(value)) ?? formatHour(Number(value))}
             stroke="#cbd5e1"
             tickLine={false}
             axisLine={false}
@@ -189,7 +197,7 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
             tickFormatter={(value) => `${value}℃`}
             tick={{ fill: "#e2e8f0", fontSize: 11 }}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={(props) => <CustomTooltip {...props} labelMap={labelMap} />} />
           <Line
             type="monotone"
             dataKey="forecast"

@@ -15,6 +15,7 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 - [x] (2026-01-14 12:06Z) チャート描画を白実線 + 灰破線 + 色付きラベル付きポイントに差し替え、軸・ツールチップをミニマル化した。
 - [x] (2026-01-14 12:06Z) アイコン列を 3 時間刻みに整え、降水確率テキストを併記するデザインへ刷新した。
 - [x] (2026-01-14 12:08Z) 画面全体のレイアウトとテストを更新し、`npm run lint`, `npm run test`, `npm run build` が通ることを検証した。
+- [x] (2026-01-14 12:45Z) 現在時刻をチャート左端にするトグルを追加し、ローテーションロジックとテスト/ビルドを再確認した。
 
 ## Surprises & Discoveries
 
@@ -100,3 +101,4 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 
 Revision Note (2026-01-14 11:53Z, Codex): 新規作成。`sketch02.jpg` に沿った UI 改修の目的・方針・マイルストンを記述し、初回の進捗を記録した。
 Revision Note (2026-01-14 12:08Z, Codex): テーマ/チャート/アイコンのスタイルを `sketch02` 風に実装し、lint/test/build 成功を反映。Surprises に jsdom + Recharts の寸法警告を追記。
+Revision Note (2026-01-14 12:45Z, Codex): 現在時刻からチャートを開始するオプションを追加し、データ回転と表示ラベルを調整。lint/test/build を再実行。

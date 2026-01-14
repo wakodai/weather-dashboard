@@ -10,7 +10,9 @@ import { DashboardResponse, HourlyPoint, Location } from "@/lib/weather/types";
 type FetchState = "idle" | "loading" | "error";
 
 type ChartDatum = {
+  order: number;
   hour: number;
+  label?: string;
   forecast?: number | null;
   actual?: number | null;
 };
@@ -20,8 +22,8 @@ const formatHourLabel = (hour: number) => hour.toString().padStart(2, "0");
 const mergeSeries = (
   forecast: HourlyPoint[],
   actual: HourlyPoint[]
-): ChartDatum[] => {
-  const byHour = new Map<number, ChartDatum>();
+): Omit<ChartDatum, "order" | "label">[] => {
+  const byHour = new Map<number, Omit<ChartDatum, "order" | "label">>();
   forecast.forEach((p) => {
     byHour.set(p.hour, { hour: p.hour, forecast: p.temperatureC, actual: null });
   });
@@ -30,6 +32,21 @@ const mergeSeries = (
     byHour.set(p.hour, { ...existing, actual: p.temperatureC });
   });
   return Array.from(byHour.values()).sort((a, b) => a.hour - b.hour);
+};
+
+const currentHourInTimezone = (timezone: string): number => {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      hour: "2-digit",
+      hour12: false
+    });
+    const parts = formatter.formatToParts(new Date());
+    const hour = parts.find((p) => p.type === "hour")?.value ?? "0";
+    return Number(hour);
+  } catch {
+    return new Date().getHours();
+  }
 };
 
 const defaultLocation = PRESET_LOCATIONS[0];
@@ -42,6 +59,7 @@ export default function HomePage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState<FetchState>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [startFromNow, setStartFromNow] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Location[]>([]);
@@ -127,8 +145,22 @@ export default function HomePage() {
 
   const chartData = useMemo(() => {
     if (!dashboard) return [];
-    return mergeSeries(dashboard.todayForecast, dashboard.yesterdayActual);
-  }, [dashboard]);
+    const merged = mergeSeries(dashboard.todayForecast, dashboard.yesterdayActual).map(
+      (item, idx) => ({
+        ...item,
+        order: idx,
+        label: `${formatHourLabel(item.hour)}時`
+      })
+    );
+
+    if (!startFromNow) return merged;
+
+    const startHour = currentHourInTimezone(selectedLocation.timezone);
+    const startIndex = merged.findIndex((d) => d.hour >= startHour);
+    const pivot = startIndex === -1 ? 0 : startIndex;
+    const rotated = merged.slice(pivot).concat(merged.slice(0, pivot));
+    return rotated.map((item, idx) => ({ ...item, order: idx }));
+  }, [dashboard, startFromNow, selectedLocation.timezone]);
 
   const timelineIcons = useMemo(() => {
     if (!dashboard) return [];
@@ -260,20 +292,29 @@ export default function HomePage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] uppercase tracking-[0.2em] text-slate-300">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-black/30 outline-none backdrop-blur"
-                />
-                <p className="text-[11px] text-slate-400">
-                  過去日も指定できます。指定日を「当日」とみなし、昨日の実績を破線で重ねます。
-                </p>
-              </div>
-            </div>
+            <label className="text-[11px] uppercase tracking-[0.2em] text-slate-300">
+              Date
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-100 shadow-inner shadow-black/30 outline-none backdrop-blur"
+            />
+            <p className="text-[11px] text-slate-400">
+              過去日も指定できます。指定日を「当日」とみなし、昨日の実績を破線で重ねます。
+            </p>
+            <label className="mt-1 flex items-center gap-2 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={startFromNow}
+                onChange={(e) => setStartFromNow(e.target.checked)}
+                className="h-4 w-4 rounded border-white/30 bg-white/10 accent-cyan-400"
+              />
+              <span className="text-xs text-slate-200">現在時刻を左端にして表示</span>
+            </label>
+          </div>
+        </div>
 
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-black/40 backdrop-blur">
               <TemperatureChart data={chartData} />
