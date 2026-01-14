@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+const notoSans = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  display: "swap"
+});
 
 export const metadata: Metadata = {
   title: "Weather Dashboard",
@@ -13,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased">
+      <body className={`${notoSans.className} min-h-screen text-slate-100 antialiased`}>
         {children}
       </body>
     </html>
