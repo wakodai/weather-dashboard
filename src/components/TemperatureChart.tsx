@@ -42,8 +42,8 @@ const CustomTooltip = ({
   const displayLabel =
     labelMap?.get(Number(label)) ?? (label !== undefined ? formatHour(Number(label)) : "");
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2 text-xs text-slate-100 shadow-xl shadow-black/40 backdrop-blur">
-      <div className="font-semibold text-white">{displayLabel}</div>
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 shadow-sm">
+      <div className="font-semibold text-slate-900">{displayLabel}</div>
       <ul className="mt-1 space-y-1">
         {payload.map((item) => (
           <li key={item.name} className="flex items-center gap-2">
@@ -51,7 +51,7 @@ const CustomTooltip = ({
               className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: item.color ?? "#ffffff" }}
             />
-            <span className="text-slate-200">
+            <span className="text-slate-700">
               {item.name}: {formatValue(item.value)}
             </span>
           </li>
@@ -166,7 +166,7 @@ const renderHighlightDot = (highlights: Map<number, Highlight>) => {
 export function TemperatureChart({ data }: TemperatureChartProps) {
   if (!data || data.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-6 text-sm text-slate-400">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
         データがまだありません。地点と日付を選ぶと表示します。
       </div>
     );
@@ -181,41 +181,41 @@ export function TemperatureChart({ data }: TemperatureChartProps) {
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 24, right: 16, left: 0, bottom: 12 }}>
-          <CartesianGrid strokeDasharray="2 8" stroke="#1f2937" vertical={false} />
+          <CartesianGrid strokeDasharray="3 6" stroke="#e2e8f0" vertical={false} />
           <XAxis
             dataKey="order"
             tickFormatter={(value) => labelMap.get(Number(value)) ?? formatHour(Number(value))}
             stroke="#cbd5e1"
             tickLine={false}
             axisLine={false}
-            tick={{ fill: "#e2e8f0", fontSize: 12 }}
+            tick={{ fill: "#475569", fontSize: 12 }}
           />
           <YAxis
             stroke="#cbd5e1"
             tickLine={false}
             axisLine={false}
             tickFormatter={(value) => `${value}℃`}
-            tick={{ fill: "#e2e8f0", fontSize: 11 }}
+            tick={{ fill: "#475569", fontSize: 11 }}
           />
           <Tooltip content={(props) => <CustomTooltip {...props} labelMap={labelMap} />} />
           <Line
             type="monotone"
             dataKey="forecast"
             name="当日予報"
-            stroke="#f8fafc"
+            stroke="#0f172a"
             strokeWidth={3}
             dot={highlightDot}
-            activeDot={{ r: 7, stroke: "#0b1224", strokeWidth: 2 }}
+            activeDot={{ r: 7, stroke: "#ffffff", strokeWidth: 2 }}
           />
           <Line
             type="monotone"
             dataKey="actual"
             name="昨日実績"
-            stroke="#cbd5e1"
+            stroke="#94a3b8"
             strokeWidth={3}
-            dot={{ stroke: "#cbd5e1", strokeWidth: 2, r: 2 }}
+            dot={{ stroke: "#94a3b8", strokeWidth: 2, r: 2 }}
             strokeDasharray="8 6"
-            activeDot={{ r: 4, stroke: "#0b1224", strokeWidth: 2 }}
+            activeDot={{ r: 4, stroke: "#ffffff", strokeWidth: 2 }}
           />
         </LineChart>
       </ResponsiveContainer>

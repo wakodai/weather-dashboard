@@ -3,15 +3,12 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
-  background: radial-gradient(circle at 20% 20%, rgba(62, 83, 162, 0.25), transparent 35%),
-    radial-gradient(circle at 80% 10%, rgba(234, 98, 135, 0.2), transparent 30%),
-    radial-gradient(circle at 50% 80%, rgba(48, 162, 197, 0.22), transparent 35%),
-    #040712;
-  color: #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #f2f4f7 60%, #eef2f6 100%);
+  color: #0f172a;
 }
 
 a {
