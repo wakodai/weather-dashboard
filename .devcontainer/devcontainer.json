@@ -1,0 +1,29 @@
+{
+  "name": "weather-dashboard",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "runArgs": ["--privileged"],
+  "containerEnv": {
+    "CODEX_HOME": "${containerWorkspaceFolder}/.codex"
+  },
+  "remoteEnv": {
+    "CODEX_HOME": "${containerWorkspaceFolder}/.codex"
+  },
+  "postCreateCommand": "mkdir -p .codex",
+  "forwardPorts": [3000],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-playwright.playwright"
+      ]
+    }
+  }
+}
+
