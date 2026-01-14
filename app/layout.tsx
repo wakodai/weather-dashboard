@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${notoSans.className} min-h-screen text-slate-100 antialiased`}>
+      <body className={`${notoSans.className} min-h-screen text-slate-900 antialiased`}>
         {children}
       </body>
     </html>
