@@ -153,6 +153,22 @@ const fetchArchiveForDate = async (args: {
   });
 };
 
+const fetchArchiveForRange = async (args: {
+  latitude: number;
+  longitude: number;
+  timezone: string;
+  startDate: string;
+  endDate: string;
+}): Promise<HourlyPoint[]> => {
+  return fetchHourly(ARCHIVE_URL, {
+    latitude: args.latitude,
+    longitude: args.longitude,
+    timezone: args.timezone,
+    start_date: args.startDate,
+    end_date: args.endDate
+  });
+};
+
 export const fetchDashboard = async (args: {
   location: Location;
   date: string;
@@ -166,11 +182,12 @@ export const fetchDashboard = async (args: {
   });
 
   const yesterdayDate = shiftDate(date, -1);
-  const yesterdayActual = await fetchArchiveForDate({
+  const yesterdayActual = await fetchArchiveForRange({
     latitude: location.latitude,
     longitude: location.longitude,
     timezone: location.timezone,
-    date: yesterdayDate
+    startDate: yesterdayDate,
+    endDate: date
   });
 
   return {

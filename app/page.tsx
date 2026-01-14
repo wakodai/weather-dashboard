@@ -22,6 +22,8 @@ const formatHourLabel = (hour: number) => hour.toString().padStart(2, "0");
 const sortByIsoTime = (points: HourlyPoint[]) =>
   [...points].sort((a, b) => (a.isoTime > b.isoTime ? 1 : -1));
 
+const extractDate = (isoTime: string) => isoTime.slice(0, 10);
+
 const sliceForecastWindow = ({
   forecast,
   baseDate,
@@ -178,18 +180,22 @@ export default function HomePage() {
       startFromNow
     });
     const actualWindow = dashboard.yesterdayActual;
-    const actualByHour = new Map<number, number>();
-    actualWindow.forEach((p) => actualByHour.set(p.hour, p.temperatureC));
+    const actualByDateHour = new Map<string, number>();
+    actualWindow.forEach((p) => {
+      actualByDateHour.set(`${extractDate(p.isoTime)}-${p.hour}`, p.temperatureC);
+    });
     const nextDate = shiftDate(baseDate, 1);
 
     return forecastWindow.map((point, idx) => {
       const isNextDay = point?.isoTime.startsWith(nextDate);
+      const prevDate = isNextDay ? baseDate : shiftDate(baseDate, -1);
+      const actualKey = `${prevDate}-${point.hour}`;
       const suffix = isNextDay ? " (+1)" : "";
       return {
         order: idx,
         hour: point.hour,
         forecast: point.temperatureC,
-        actual: actualByHour.get(point.hour) ?? null,
+        actual: actualByDateHour.get(actualKey) ?? null,
         label: `${formatHourLabel(point.hour)}時${suffix}`
       };
     });
