@@ -1,2 +1,7 @@
 .codex/
-
+.next/
+node_modules/
+.env*
+*.log
+coverage/
+out/
