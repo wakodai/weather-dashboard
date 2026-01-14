@@ -15,6 +15,7 @@ type ChartDatum = {
   label?: string;
   forecast?: number | null;
   actual?: number | null;
+  weatherCode?: number | null;
 };
 
 const formatHourLabel = (hour: number) => hour.toString().padStart(2, "0");
@@ -85,7 +86,7 @@ export default function HomePage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState<FetchState>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [startFromNow, setStartFromNow] = useState(false);
+  const [startFromNow, setStartFromNow] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Location[]>([]);
@@ -196,28 +197,21 @@ export default function HomePage() {
         hour: point.hour,
         forecast: point.temperatureC,
         actual: actualByDateHour.get(actualKey) ?? null,
-        label: `${formatHourLabel(point.hour)}時${suffix}`
+        label: `${formatHourLabel(point.hour)}時${suffix}`,
+        weatherCode: point.weatherCode
       };
     });
   }, [dashboard, startFromNow, selectedLocation.timezone]);
 
   const timelineIcons = useMemo(() => {
     if (!dashboard) return [];
-    const baseDate = dashboard.date;
-    const startHour = currentHourInTimezone(selectedLocation.timezone);
-    const windowed = sliceForecastWindow({
-      forecast: dashboard.todayForecast,
-      baseDate,
-      startHour,
-      startFromNow
-    });
-    return windowed
-      .filter((_, idx) => idx % 3 === 0)
-      .map((point) => ({
-        point,
-        descriptor: describeWeatherCode(point.weatherCode)
-      }));
-  }, [dashboard, selectedLocation.timezone, startFromNow]);
+    return chartData.map((item, idx) => ({
+      label: item.label ?? `${formatHourLabel(item.hour)}時`,
+      descriptor: describeWeatherCode(item.weatherCode ?? 0),
+      temperature: item.forecast,
+      visible: idx % 3 === 0
+    }));
+  }, [chartData, dashboard]);
 
   const handlePresetChange = (id: string) => {
     const preset = PRESET_LOCATIONS.find((p) => p.id === id);
@@ -359,38 +353,33 @@ export default function HomePage() {
           <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50 p-4">
             <TemperatureChart data={chartData} />
           </div>
-        </section>
-
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timeline</p>
-              <p className="text-sm text-slate-700">3時間ごとの天気と降水確率</p>
-            </div>
-            {dashboard && (
-              <span className="text-xs text-slate-500">
-                {dashboard.date} / {dashboard.location.timezone}
-              </span>
-            )}
-          </div>
-
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
-            {timelineIcons.map(({ point, descriptor }) => (
-              <div
-                key={`${point.isoTime}-${point.hour}`}
-                className="flex flex-col items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-center shadow-sm"
-              >
-                <span className="text-xs text-slate-500">{formatHourLabel(point.hour)}時</span>
-                <span className="text-2xl">{descriptor.emoji}</span>
-                <span className="text-[11px] text-slate-700">{descriptor.label}</span>
-                <span className="text-[11px] text-slate-500">{descriptor.rainChance}%</span>
+          <div className="mt-6 space-y-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Timeline</p>
+            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
+              <div className="flex divide-x divide-slate-100">
+                {timelineIcons.map(({ label, descriptor, temperature, visible }, idx) => (
+                  <div
+                    key={`${label}-${idx}`}
+                    className="flex-1 px-2 py-3 text-center"
+                    style={{ minWidth: `${100 / timelineIcons.length}%` }}
+                  >
+                    {visible ? (
+                      <div className="space-y-1">
+                        <span className="text-xs text-slate-500">{label}</span>
+                        <div className="text-2xl">{descriptor.emoji}</div>
+                        <div className="text-[11px] text-slate-700">{descriptor.label}</div>
+                        {typeof temperature === "number" && (
+                          <div className="text-[11px] text-slate-700">{temperature.toFixed(0)}℃</div>
+                        )}
+                        <div className="text-[11px] text-slate-500">{descriptor.rainChance}%</div>
+                      </div>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-slate-300">·</div>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-            {timelineIcons.length === 0 && (
-              <p className="col-span-full text-sm text-slate-600">
-                地点と日付を選ぶとタイムラインを表示します。
-              </p>
-            )}
+            </div>
           </div>
         </section>
       </div>

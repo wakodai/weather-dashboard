@@ -78,6 +78,7 @@ const buildFetchMock = () =>
 describe("HomePage", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", buildFetchMock() as unknown as typeof fetch);
+    vi.setSystemTime(new Date("2026-01-14T00:00:00Z"));
   });
 
   afterEach(() => {

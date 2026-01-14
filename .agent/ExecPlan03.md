@@ -14,6 +14,8 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 - [x] (2026-01-14 13:45Z) テーマ（背景/フォントカラー/カード/フォーム）のフラット化を実装した。
 - [x] (2026-01-14 13:45Z) チャート・タイムラインの配色とスタイルを白基調に合わせて再調整した。
 - [x] (2026-01-14 13:34Z) テスト・ビルドを実行し、完了を確認した。
+- [x] (2026-01-14 13:50Z) start-from-now をデフォルト ON にし、タイムラインをチャートカード内へ統合した。
+- [x] (2026-01-14 13:55Z) チャートとタイムラインの時間軸を同じデータ列から生成するよう統一した。
 
 ## Surprises & Discoveries
 
@@ -70,3 +72,5 @@ This ExecPlan is a living document. The sections `Progress`, `Surprises & Discov
 新規依存なし。既存のコンポーネント構成と props は変えない（TemperatureChart の API も維持）。
 
 Revision Note (2026-01-14 13:34Z, Codex): 白基調のフラットデザインへ刷新し、チャート/タイムライン/フォームの配色を変更。lint/test/build 成功を確認し、既知の Recharts 警告を Surprises に記録。
+Revision Note (2026-01-14 13:50Z, Codex): start-from-now を初期 ON に設定し、タイムラインをチャートカード内へ移動して時間軸を統一。
+Revision Note (2026-01-14 13:55Z, Codex): チャート用データを基点にタイムラインを生成し、時間ラベルと並び順を完全一致させた。
